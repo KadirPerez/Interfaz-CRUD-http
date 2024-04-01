@@ -1,8 +1,8 @@
 <template>
-  <v-data-table :headers="headers" :items="desserts" :sort-by="[{ key: 'calories', order: 'asc' }]">
+  <v-data-table :headers="headers" :items="activos">
     <template v-slot:top>
       <v-toolbar flat>
-        <v-toolbar-title>Interfaz CRUD usando http</v-toolbar-title>
+        <v-toolbar-title>Cliente con el servidor https creado</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-dialog v-model="dialog" max-width="500px">
           <template v-slot:activator="{ props }">
@@ -24,8 +24,8 @@
                     sm="6"
                   >
                     <v-text-field
-                      v-model="editedItem.userName"
-                      label="Autor"
+                      v-model="editedItem.numero_serie"
+                      label="Numero de serie"
                     ></v-text-field>
                   </v-col>
                   <v-col
@@ -34,8 +34,8 @@
                     sm="6"
                   >
                     <v-text-field
-                      v-model="editedItem.title"
-                      label="Titulo"
+                      v-model="editedItem.numero_inventario"
+                      label="Numero de inventario"
                     ></v-text-field>
                   </v-col>
                   <v-col
@@ -44,8 +44,48 @@
                     sm="6"
                   >
                     <v-text-field
-                      v-model="editedItem.body"
-                      label="Post"
+                      v-model="editedItem.tipo"
+                      label="Tipo"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col
+                    cols="12"
+                    md="4"
+                    sm="6"
+                  >
+                    <v-text-field
+                      v-model="editedItem.decsripcion"
+                      label="Descripcion"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col
+                    cols="12"
+                    md="4"
+                    sm="6"
+                  >
+                    <v-text-field
+                      v-model="editedItem.ubicacion"
+                      label="Ubicacion"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col
+                    cols="12"
+                    md="4"
+                    sm="6"
+                  >
+                    <v-text-field
+                      v-model="editedItem.responsable"
+                      label="Responsable"
+                    ></v-text-field>
+                  </v-col>
+                  <v-col
+                    cols="12"
+                    md="4"
+                    sm="6"
+                  >
+                    <v-text-field
+                      v-model="editedItem.imagen"
+                      label="Imagen"
                     ></v-text-field>
                   </v-col>
                 </v-row>
@@ -112,27 +152,44 @@
 
 
 <script>
+  import axios from 'axios';
+
   export default {
     data: () => ({
       dialog: false,
       dialogDelete: false,
       headers: [
-        { title: 'Autor', sortable: false, key: 'userName', },
-        { title: 'Titulo', sortable: false, key: 'title' },
-        { title: 'Post', sortable: false, key: 'body' },
-        { title: 'Accion', sortable: false, key: 'actions' },
+        { title: 'ID', sortable: false, key: 'id', },
+        { title: 'Numero de serie', sortable: false, key: 'numero_serie' },
+        { title: 'Numero de inventario', sortable: false, key: 'numero_inventario' },
+        { title: 'Tipo', sortable: false, key: 'tipo'},
+        { title: 'Descripcion', sortable: false, key: 'descripcion'},
+        { title: 'Ubicacion', sortable: false, key: 'ubicacion'},
+        { title: 'Responsable', sortable: false, key: 'responsable'},
+        { title: 'Imagen', sortable: false, key: 'imagen'},
+        { title: 'Accion', sortable: false, key: 'actions'}
       ],
-      desserts: [],
+      activos: [],
       editedIndex: -1,
       editedItem: {
-        userName: '',
-        title: '',
-        body: ''
+        id: '',
+        numero_serie: '',
+        numero_inventario: '',
+        tipo: '',
+        decsripcion: '',
+        ubicacion: '', 
+        responsable: '', 
+        imagen:'' 
       },
       defaultItem: {
-        userId: '',
-        title: '',
-        body: ''
+        id: '',
+        numero_serie: '',
+        numero_inventario: '',
+        tipo: '',
+        decsripcion: '',
+        ubicacion: '', 
+        responsable: '', 
+        imagen:'' 
       },
     }),
 
@@ -150,7 +207,7 @@
         val || this.closeDelete()
       },
     },
-
+    
     created () {
       this.initialize()
     },
@@ -158,57 +215,32 @@
     methods: {
       async initialize() {
         try {
-          const [postsResponse, usersResponse] = await Promise.all([
-            fetch("https://jsonplaceholder.typicode.com/posts"),
-            fetch("https://jsonplaceholder.typicode.com/users")
-          ]);
+          const response = await axios.get('https://localhost:4000/activos');
+          this.activos = response.data
 
-          if (!postsResponse.ok || !usersResponse.ok) {
-            throw new Error('Failed to fetch data');
-          }
-
-          const posts = await postsResponse.json();
-          const users = await usersResponse.json();
-
-          const usersMap = new Map(users.map(user => [user.id, user.name]));
-
-          this.desserts = posts.map(post => ({
-            userId: post.userId,
-            title: post.title,
-            body: post.body,
-            userName: usersMap.get(post.userId)
-          }));
         } catch (error) {
           console.error('Error initializing:', error);
         }
       },
 
       editItem (item) {
-        this.editedIndex = this.desserts.indexOf(item)
+        this.editedIndex = this.activos.indexOf(item)
         this.editedItem = Object.assign({}, item)
         this.dialog = true
       },
 
       async deleteItem(item) {
+        const index = this.activos.indexOf(item);
+        const id = this.activos[index].id;
 
-        const index = this.desserts.indexOf(item);
-        const title = this.desserts[index].title;
-
-        const resp = await fetch(`https://jsonplaceholder.typicode.com/posts/${title}`, {
-          method: 'DELETE',
-        });
-
-        if (resp.ok) {
-          this.editedIndex = this.desserts.indexOf(item)
-          this.editedItem = Object.assign({}, item)
-          this.dialogDelete = true
-        } else {
-          throw new Error('Failed to delete item');
-        }
+        await axios.delete(`https://localhost:4000/activos/:${id}`);
+        
+        this.editedIndex = this.activos.indexOf(item)
+        this.editedItem = Object.assign({}, item)
+        this.dialogDelete = true
       },
 
       deleteItemConfirm () {
-        this.desserts.splice(this.editedIndex, 1)
         this.closeDelete()
       },
 
@@ -240,27 +272,23 @@
           
           const responseData = await resp.json();
 
-          Object.assign(this.desserts[this.editedIndex], responseData);
+          Object.assign(this.activos[this.editedIndex], responseData);
           this.close();
 
         } else {
-          const resp = await fetch("https://jsonplaceholder.typicode.com/posts", {
-              method: 'POST',
-              body: JSON.stringify({
-              userName: this.editedItem.userName,
-              title: this.editedItem.title,
-              body: this.editedItem.body,
-            }),
-            headers: {
-              'Content-type': 'application/json; charset=UTF-8',
-            },
+          await axios.post("https://localhost:4000/activos", {
+            numero_serie: this.editedItem.numero_serie,
+            numero_inventario: this.editedItem.numero_inventario,
+            tipo: this.editedItem.tipo,
+            decsripcion: this.editedItem.decsripcion,
+            ubicacion: this.editedItem.ubicacion, 
+            responsable: this.editedItem.responsable, 
+            imagen: this.editedItem.imagen 
           });
 
-          const responseData = await resp.json();
+          this.initialize();
 
-          this.desserts.push(responseData);
           this.close();
-
         }
       },
     },
