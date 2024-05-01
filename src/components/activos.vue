@@ -4,7 +4,7 @@
       <v-toolbar flat>
         <v-toolbar-title>Activos</v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-dialog v-model="dialog" max-width="500px">
+        <v-dialog v-model="dialog" max-width="750px">
           <template v-slot:activator="{ props }">
             <v-btn class="mb-2" color="primary" dark v-bind="props">
               Nuevo activo
@@ -38,6 +38,35 @@
                           v-model="editedItem.descripcion"
                           label="Descripcion"
                         ></v-text-field>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col cols="6">
+                        <v-select
+                          v-model="editedItem.ubicacion"
+                          :items="ubicacionesDisponibles"
+                          label="Ubicacion"
+                          clearable 
+                        ></v-select>
+                      </v-col>
+                      <v-col cols="6">
+                        <v-select
+                          v-model="editedItem.responsable"
+                          :items="responsablesDisponibles"
+                          label="Responsable"
+                          clearable
+                        ></v-select>
+                      </v-col>
+                    </v-row>
+                    <v-row>
+                      <v-col cols="12">
+                        <v-select
+                          v-model="editedItem.tags"
+                          :items="tagsDisponibles"
+                          label="Tag"
+                          multiple
+                          chips
+                        ></v-select>
                       </v-col>
                     </v-row>
                     <v-row>
@@ -82,126 +111,6 @@
           </v-card>
         </v-dialog>
 
-        <v-dialog v-model="dialogResponsable" max-width="500px">
-          <v-card>
-            <v-card-title>
-              <span class="text-h5">{{"Responsable a agregar"}}</span>
-            </v-card-title>
-            <v-card-text>
-              <v-container>
-                <v-row>
-                  <v-col cols="12">
-                    <v-select
-                      v-model="responsable.nombre"
-                      :items="responsablesDisponibles"
-                      label="Seleccionar responsable"
-                    ></v-select>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="blue-darken-1" variant="text" @click="closeAddResponsable">
-                Cancelar
-              </v-btn>
-              <v-btn color="blue-darken-1" variant="text" @click="saveAddResponsable">
-                Guardar
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <v-dialog v-model="dialogUbicacion" max-width="500px">
-          <v-card>
-            <v-card-title>
-              <span class="text-h5">{{"Ubicacion a agregar"}}</span>
-            </v-card-title>
-            <v-card-text>
-              <v-container>
-                <v-row>
-                  <v-col cols="12">
-                    <v-select
-                      v-model="this.ubicacion.descripcion"
-                      :items="ubicacionesDisponibles"
-                      label="Seleccionar ubicacion"
-                    ></v-select>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="blue-darken-1" variant="text" @click="this.closAddUbicacion">
-                Cancelar
-              </v-btn>
-              <v-btn color="blue-darken-1" variant="text" @click="this.saveAddUbicacion">
-                Guardar
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <v-dialog v-model="dialogTag" max-width="500px">
-          <v-card>
-            <v-card-title>
-              <span class="text-h5">{{"Tag a agregar"}}</span>
-            </v-card-title>
-            <v-card-text>
-              <v-container>
-                <v-row>
-                  <v-col cols="12">
-                    <v-select
-                      v-model="this.tag.tag"
-                      :items="tagsDisponibles"
-                      label="Seleccionar tag"
-                    ></v-select>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="blue-darken-1" variant="text" @click="this.closAddTag">
-                Cancelar
-              </v-btn>
-              <v-btn color="blue-darken-1" variant="text" @click="this.saveAddTag">
-                Guardar
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <v-dialog v-model="dialogDeleteTag" max-width="500px">
-          <v-card>
-            <v-card-title>
-              <span class="text-h5">{{"Tag a eliminar"}}</span>
-            </v-card-title>
-            <v-card-text>
-              <v-container>
-                <v-row>
-                  <v-col cols="12">
-                    <v-select
-                      v-model="tag.tag"
-                      :items="tagsAgregados"
-                      label="Seleccionar tag"
-                    ></v-select>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="blue-darken-1" variant="text" @click="this.closeDeleteTag">
-                Cancelar
-              </v-btn>
-              <v-btn color="blue-darken-1" variant="text" @click="this.saveDeleteTag">
-                Borrar
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
         <v-dialog v-model="dialogDelete" max-width="500px">
         <v-card>
           <v-container>
@@ -241,34 +150,6 @@
       >
         mdi-delete
       </v-icon>
-      <v-icon
-        class="me-2"
-        size="small"
-        @click="addUbicacion(item)"
-      >
-        mdi-map-marker
-      </v-icon>
-      <v-icon
-        class="me-2"
-        size="small"
-        @click="addResponsable(item)"
-      >
-        mdi-account
-      </v-icon>
-      <v-icon
-        class="me-2"
-        size="small"
-        @click="addTag(item)"
-      >
-        mdi-tag
-      </v-icon>
-      <v-icon
-        class="me-2"
-        size="small"
-        @click="deleteTag(item)"
-      >
-        mdi-tag-off
-      </v-icon>
     </template>
   </v-data-table>
 </template>
@@ -279,10 +160,6 @@
 
   export default {
     data: () => ({
-      dialogDeleteTag: false,
-      dialogTag: false,
-      dialogUbicacion: false,
-      dialogResponsable: false,
       dialog: false,
       dialogDelete: false,
       headers: [
@@ -300,13 +177,9 @@
       editedIndex: -1,
       editedItem: {},
       defaultItem: {},
-      responsable: {},
-      ubicacion: {}, 
-      tag: {},
       responsablesDisponibles: [],
       ubicacionesDisponibles: [],
       tagsDisponibles: [],
-      tagsAgregados: []
     }),
 
     computed: {
@@ -331,6 +204,7 @@
       async initialize() {
         try {
           const activosRecibidos = await axios.get('https://localhost:4000/activo');
+          await console.log(activosRecibidos)
           const activosProcesados = [];
 
           for (const activo of activosRecibidos.data) {
@@ -348,7 +222,11 @@
               ubicacion = await axios.get(`https://localhost:4000/ubicacion/${activo.idUbicacion}`)
               activo.ubicacion = ubicacion.data.descripcion
             }
-            activo.tags = tags.data.map(tag => tag.tag).join(', ')
+
+            if(tags.data.length != 0) {
+              activo.tags = tags.data.map(tag => tag.tag).join(', ')
+            }
+            
             activosProcesados.push(activo);
           }
           await this.obtenerEmpleados()
@@ -357,7 +235,7 @@
           
           this.activos = activosProcesados;
         } catch (error) {
-          console.error('Error initializing:', error);
+          console.error(`Error initializing:${error}`, error);
         }
       },
 
@@ -365,23 +243,56 @@
         this.editedIndex = this.activos.indexOf(item)
         this.editedItem = Object.assign({}, item)
         if(this.editedItem.imagen != null) this.editedItem.imagen = item.imagen.data 
+        if(this.editedItem.tags != undefined)this.editedItem.tags = item.tags.split(', ')
         this.dialog = true
       },
 
       async save() {
-        try{
-          if (this.editedIndex > -1) {
-            const id = this.activos[this.editedIndex].id;
-            await axios.put(`https://localhost:4000/activo/${id}`, this.editedItem);
-            this.close();
-            this.initialize()
-          } else {
-            await axios.post("https://localhost:4000/activo", this.editedItem);
-            this.close();
-            this.initialize()
+     
+        await this.editarResponsableUbicacion()
+        
+        if(this.editedIndex > -1){
+          await this.editarTags()
+          await axios.put(`https://localhost:4000/activo/${this.editedItem.id}`, this.editedItem)
+        } else {
+          await axios.post(`https://localhost:4000/activo`, this.editedItem)
+        }
+
+        this.close()
+        await this.initialize()
+      },
+
+      async editarResponsableUbicacion() {
+        if(this.editedItem.responsable != null){
+          const responsable = await axios.get(`https://localhost:4000/responsable/nombre/${this.editedItem.responsable}`)
+          this.editedItem.idResponsable = responsable.data.id
+        } else {
+          this.editedItem.idResponsable = this.editedItem.responsable
+        }
+        
+        if(this.editedItem.ubicacion != null){
+          const ubicacion = await axios.get(`https://localhost:4000/ubicacion/descripcion/${this.editedItem.ubicacion}`)
+          this.editedItem.idUbicacion = ubicacion.data.id
+        } else {
+          this.editedItem.idUbicacion = this.editedItem.ubicacion
+        }
+      },
+
+      async editarTags() {
+        if(this.editedIndex != -1) {
+          const tagsAplicados = await axios.get(`https://localhost:4000/activo/${this.editedItem.id}/tags`)
+          for (let i = 0; i < tagsAplicados.data.length; i++) {
+            let tag = tagsAplicados.data[i];
+            axios.put(`https://localhost:4000/activo/${this.editedItem.id}/borrarTag/${tag.id}`)
           }
-        } catch (error) {
-          console.error('Error al guardar la ubicacion:', error);
+        }
+
+        if(this.editedItem.tags != undefined) {
+          for(const tag of this.editedItem.tags) {
+            const respuestaTag = await axios.get(`https://localhost:4000/tag/tag/${tag}`)
+            console.log(tag)
+            axios.put(`https://localhost:4000/activo/${this.editedItem.id}/tag/${respuestaTag.data.id}`)
+          }
         }
       },
 
@@ -393,7 +304,6 @@
         })
       },
 
-
       deleteItem(item) {
         this.dialogDelete = true
         this.editedIndex = this.activos.indexOf(item);
@@ -402,8 +312,8 @@
 
       async deleteItemConfirm () {
         await axios.delete(`https://localhost:4000/activo/${this.editedItem.id}`);
-        this.initialize()
-        this.closeDelete()
+        await this.initialize()
+        await this.closeDelete()
       },
 
       closeDelete () {
@@ -414,84 +324,10 @@
         })
       },
 
-      addResponsable (item) {
-        this.editedIndex = this.activos.indexOf(item)
-        this.editedItem = Object.assign({}, item)
-        this.dialogResponsable = true
-      },
-
-      closeAddResponsable () {
-        this.dialogResponsable = false
-        this.responsable = {}
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedIndex = -1
-        })
-      },
-
-      async saveAddResponsable () {
-        try {
-          const responsableAgregado = await axios.get(`https://localhost:4000/responsable/nombre/${this.responsable.nombre}`)
-          await axios.put(`https://localhost:4000/activo/${this.editedItem.id}/responsable/${responsableAgregado.data.numEmpleado}`)
-          await this.closeAddResponsable();
-          await this.initialize()
-        } catch (error) {
-          console.error('Error al guardar el responsable:', error);
-        }
-      }, 
-
-      addUbicacion (item) {
-        this.editedIndex = this.activos.indexOf(item)
-        this.editedItem = Object.assign({}, item)
-        this.dialogUbicacion = true
-      },
-
-      closAddUbicacion () {
-        this.dialogUbicacion = false
-        this.ubicacion = {}
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedIndex = -1
-        })
-      },
-
-      async saveAddUbicacion () {
-        try {
-          const ubicacionAgregada = await axios.get(`https://localhost:4000/ubicacion/descripcion/${this.ubicacion.descripcion}`)
-          await axios.put(`https://localhost:4000/activo/${this.editedItem.id}/ubicacion/${ubicacionAgregada.data.id}`)
-          await this.closAddUbicacion()
-          await this.initialize()
-        } catch (error) {
-          console.error('Error al guardar la ubicacion:', error);
-        }
-      },
-
-      addTag (item) {
-        this.editedIndex = this.activos.indexOf(item)
-        this.editedItem = Object.assign({}, item)
-        this.dialogTag = true
-      },
-      closAddTag () {
-        this.dialogTag = false
-        this.tag = {}
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedIndex = -1
-        })
-      },
-      async saveAddTag() {
-        try{
-          const tagAgregado = await axios.get(`https://localhost:4000/tag/tag/${this.tag.tag}`)
-          await axios.put(`https://localhost:4000/activo/${this.editedItem.id}/tag/${tagAgregado.data.id}`)
-          await this.closAddTag()
-          await this.initialize()
-        } catch (error) {
-          console.error('Error al guardar la ubicacion:', error);
-        }
-      }, 
       openFilePicker() {
         this.$refs.fileInput.click();
       },
+
       handleFileChange(event) {
         const file = event.target.files[0];
         if (file) {
@@ -508,6 +344,7 @@
           this.editedItem.nombreImagen = file.name
         }
       },
+
       generarURL(buffer, editando){
         let blob = null
 
@@ -520,6 +357,7 @@
           return URL.createObjectURL(blob)
         }
       },
+
       async obtenerEmpleados(){
         const empleado = await axios.get('https://localhost:4000/responsable')
         const dataEmpleados = empleado.data
@@ -531,6 +369,7 @@
 
         this.responsablesDisponibles = empleados
       },
+
       async obtenerUbicaciones(){
         const ubicacion = await axios.get('https://localhost:4000/ubicacion')
         const dataUbicacion = ubicacion.data
@@ -542,6 +381,7 @@
 
         this.ubicacionesDisponibles = ubicaciones
       },
+
       async obtenerTags(){
         const tag = await axios.get('https://localhost:4000/tag')
         const dataTags = tag.data
@@ -552,41 +392,6 @@
         }
 
         this.tagsDisponibles = tags
-      },
-      async deleteTag(item) {
-        this.editedIndex = this.activos.indexOf(item)
-        this.editedItem = Object.assign({}, item)
-        this.dialogDeleteTag = true
-        const tag = await axios.get(`https://localhost:4000/activo/${item.id}/tags`)
-        const dataTag = tag.data
-        const tags = []
-        for (const tag of dataTag) {
-          tags.push(tag.tag)
-        }
-        this.tagsAgregados = tags
-      },
-
-      closeDeleteTag () {
-        this.dialogDeleteTag = false
-        this.tag = {}
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedIndex = -1
-        })
-      },
-      
-      async saveDeleteTag() {
-        try{
-          const tagEliminar = await axios.get(`https://localhost:4000/tag/tag/${this.tag.tag}`)
-          axios.put(`https://localhost:4000/activo/${this.editedItem.id}/borrarTag/${tagEliminar.data.id}`)
-
-          this.closeDeleteTag()
-          await this.initialize()
-          
-          
-        } catch (error) {
-          console.error('Error al eliminar tag:', error);
-        }
       }
     }
   }

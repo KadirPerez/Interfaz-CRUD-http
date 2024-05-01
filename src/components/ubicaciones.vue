@@ -364,7 +364,7 @@
           axios.put(`https://localhost:4000/activo/${activo.data.id}/ubicacion/${this.editedItem.id}`)
 
           this.closeAddActivo();
-          await this.initialize()
+          this.initialize()
         } catch (error) {
           console.error('Error al guardar el responsable:', error);
         }
@@ -397,7 +397,7 @@
           axios.put(`https://localhost:4000/activo/${activo.data.id}/borrarUbicacion`)
 
           this.closeDeleteActivo();
-          await this.initialize()
+          this.initialize()
         } catch (error) {
           console.error('Error al borrar el activo:', error);
         }
