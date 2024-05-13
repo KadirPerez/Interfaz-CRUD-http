@@ -1,7 +1,9 @@
 <template>
-  <Activos />
+  <v-container style="height: 100vh; display: flex; justify-content: center; align-items: center;">
+    <BtnGoogleLogin />
+  </v-container>
 </template>
 
 <script setup>
-  import Activos from '@/components/activos.vue';
+  import BtnGoogleLogin from '@/components/BtnGoogleLogin.vue';
 </script>

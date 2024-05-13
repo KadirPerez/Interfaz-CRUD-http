@@ -157,6 +157,7 @@
 
 <script>
   import axios from 'axios';
+  import { useStore } from 'vuex';
 
   export default {
     data: () => ({
@@ -180,6 +181,7 @@
       responsablesDisponibles: [],
       ubicacionesDisponibles: [],
       tagsDisponibles: [],
+      token : useStore().state.token
     }),
 
     computed: {
@@ -203,23 +205,38 @@
     methods: {
       async initialize() {
         try {
-          const activosRecibidos = await axios.get('https://localhost:4000/activo');
-          await console.log(activosRecibidos)
+          const activosRecibidos = await axios.get('https://localhost:4000/activo', {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
           const activosProcesados = [];
 
           for (const activo of activosRecibidos.data) {
-            const tags = await axios.get(`https://localhost:4000/activo/${activo.id}/tags`)
+            const tags = await axios.get(`https://localhost:4000/activo/${activo.id}/tags`, {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
       
             let responsable = {}
             let ubicacion = {}
 
             if(activo.idResponsable != null) {
-              responsable = await axios.get(`https://localhost:4000/responsable/${activo.idResponsable}`)
+              responsable = await axios.get(`https://localhost:4000/responsable/${activo.idResponsable}`, {
+                headers: {
+                  Authorization: `Bearer ${this.token}`
+                }
+              })
               activo.responsable = responsable.data.nombre
             }
 
             if(activo.idUbicacion != null) {
-              ubicacion = await axios.get(`https://localhost:4000/ubicacion/${activo.idUbicacion}`)
+              ubicacion = await axios.get(`https://localhost:4000/ubicacion/${activo.idUbicacion}`, {
+                headers: {
+                  Authorization: `Bearer ${this.token}`
+                }
+              })
               activo.ubicacion = ubicacion.data.descripcion
             }
 
@@ -248,14 +265,21 @@
       },
 
       async save() {
-     
         await this.editarResponsableUbicacion()
         
         if(this.editedIndex > -1){
           await this.editarTags()
-          await axios.put(`https://localhost:4000/activo/${this.editedItem.id}`, this.editedItem)
+          await axios.put(`https://localhost:4000/activo/${this.editedItem.id}`, this.editedItem, {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
         } else {
-          await axios.post(`https://localhost:4000/activo`, this.editedItem)
+          await axios.post(`https://localhost:4000/activo`, this.editedItem, {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
         }
 
         this.close()
@@ -263,15 +287,27 @@
       },
 
       async editarResponsableUbicacion() {
+
         if(this.editedItem.responsable != null){
-          const responsable = await axios.get(`https://localhost:4000/responsable/nombre/${this.editedItem.responsable}`)
+          const responsable = await axios.get(`https://localhost:4000/responsable/nombre/${this.editedItem.responsable}`, {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
           this.editedItem.idResponsable = responsable.data.id
         } else {
           this.editedItem.idResponsable = this.editedItem.responsable
         }
-        
+
         if(this.editedItem.ubicacion != null){
-          const ubicacion = await axios.get(`https://localhost:4000/ubicacion/descripcion/${this.editedItem.ubicacion}`)
+          const ubicacion = await axios.get(`https://localhost:4000/ubicacion/descripcion/${this.editedItem.ubicacion}`, {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
+
+          console.log(this.editedItem.ubicacion)
+          
           this.editedItem.idUbicacion = ubicacion.data.id
         } else {
           this.editedItem.idUbicacion = this.editedItem.ubicacion
@@ -280,18 +316,33 @@
 
       async editarTags() {
         if(this.editedIndex != -1) {
-          const tagsAplicados = await axios.get(`https://localhost:4000/activo/${this.editedItem.id}/tags`)
+          const tagsAplicados = await axios.get(`https://localhost:4000/activo/${this.editedItem.id}/tags`, {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
           for (let i = 0; i < tagsAplicados.data.length; i++) {
             let tag = tagsAplicados.data[i];
-            axios.put(`https://localhost:4000/activo/${this.editedItem.id}/borrarTag/${tag.id}`)
+            axios.put(`https://localhost:4000/activo/${this.editedItem.id}/borrarTag/${tag.id}`, {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
           }
         }
 
         if(this.editedItem.tags != undefined) {
           for(const tag of this.editedItem.tags) {
-            const respuestaTag = await axios.get(`https://localhost:4000/tag/tag/${tag}`)
-            console.log(tag)
-            axios.put(`https://localhost:4000/activo/${this.editedItem.id}/tag/${respuestaTag.data.id}`)
+            const respuestaTag = await axios.get(`https://localhost:4000/tag/tag/${tag}`, {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
+            axios.put(`https://localhost:4000/activo/${this.editedItem.id}/tag/${respuestaTag.data.id}`, {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
           }
         }
       },
@@ -311,7 +362,11 @@
       },
 
       async deleteItemConfirm () {
-        await axios.delete(`https://localhost:4000/activo/${this.editedItem.id}`);
+        await axios.delete(`https://localhost:4000/activo/${this.editedItem.id}`, {
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
+        })
         await this.initialize()
         await this.closeDelete()
       },
@@ -358,8 +413,12 @@
         }
       },
 
-      async obtenerEmpleados(){
-        const empleado = await axios.get('https://localhost:4000/responsable')
+      async obtenerEmpleados(){        
+        const empleado = await axios.get('https://localhost:4000/responsable', {
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
+        })
         const dataEmpleados = empleado.data
         const empleados = []
 
@@ -371,7 +430,11 @@
       },
 
       async obtenerUbicaciones(){
-        const ubicacion = await axios.get('https://localhost:4000/ubicacion')
+        const ubicacion = await axios.get('https://localhost:4000/ubicacion', {
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
+        })
         const dataUbicacion = ubicacion.data
         const ubicaciones = []
 
@@ -383,7 +446,11 @@
       },
 
       async obtenerTags(){
-        const tag = await axios.get('https://localhost:4000/tag')
+        const tag = await axios.get('https://localhost:4000/tag', {
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
+        })
         const dataTags = tag.data
         const tags = []
 

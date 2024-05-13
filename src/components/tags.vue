@@ -4,7 +4,7 @@
         <v-toolbar flat>
           <v-toolbar-title>Tags</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-dialog v-model="dialog" max-width="500px">
+          <v-dialog v-model="dialog" max-width="600px">
             <template v-slot:activator="{ props }">
               <v-btn class="mb-2" color="primary" dark v-bind="props">
                 Nuevo tag
@@ -22,10 +22,21 @@
                         <v-col cols="12">
                           <v-text-field
                             v-model="editedItem.tag"
-                            label="Descripcion"
+                            label="Tag"
                           ></v-text-field>
                         </v-col>
                       </v-row>
+                      <v-row>
+                        <v-col cols="12">
+                          <v-select
+                            v-model="editedItem.activos"
+                            :items="activos"
+                            label="Activos"
+                            multiple
+                            chips
+                          ></v-select>
+                        </v-col>
+                      </v-row>  
                     </v-container>
                   </v-card-text>
                 </v-row>
@@ -51,55 +62,6 @@
               </v-container>
             </v-card>
           </v-dialog>
-  
-          <v-dialog v-model="dialogDelete" max-width="500px">
-          <v-card>
-            <v-container>
-              <v-row justify="center">
-                <v-card-title class="text-h5">¿Seguro que desea borrar este item?</v-card-title>
-              </v-row>
-              <v-row justify="center">
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn color="blue-darken-1" variant="text" @click="closeDelete">Cancelar</v-btn>
-                  <v-btn color="blue-darken-1" variant="text" @click="deleteItemConfirm">Continuar</v-btn>
-                  <v-spacer></v-spacer>
-                </v-card-actions>
-              </v-row>
-            </v-container>
-          </v-card>
-          </v-dialog>
-
-          <v-dialog v-model="dialogActivo" max-width="500px">
-          <v-card>
-            <v-card-title>
-              <span class="text-h5">{{"Activo a agregar"}}</span>
-            </v-card-title>
-            <v-card-text>
-              <v-container>
-                <v-row>
-                  <v-col cols="12">
-                    <v-select
-                      v-model="activo.descripcion"
-                      :items="activos"
-                      label="Seleccionar activo"
-                    ></v-select>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="blue-darken-1" variant="text" @click="closeAddActivo">
-                Cancelar
-              </v-btn>
-              <v-btn color="blue-darken-1" variant="text" @click="saveAddActivo">
-                Guardar
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-          </v-dialog>
-
           <v-dialog v-model="dialogDeleteActivo" max-width="500px">
             <v-card>
               <v-card-title>
@@ -129,13 +91,7 @@
               </v-card-actions>
             </v-card>
           </v-dialog>
-        
         </v-toolbar>
-      
-      </template>
-  
-      <template v-slot:item.imagen="{ item }">
-        <img :src="item.imagen" alt="Imagen" style="max-width: 100px; max-height: 100px;">
       </template>
   
       <template v-slot:item.actions="{ item }">
@@ -153,27 +109,14 @@
         >
           mdi-delete
         </v-icon>
-        <v-icon
-          class="me-2"
-          size="small"
-          @click="addActivo(item)"
-        >
-          mdi-devices
-        </v-icon>
-        <v-icon
-          class="me-2"
-          size="small"
-          @click="deleteActivo(item)"
-        >
-          mdi-alpha-x-circle
-        </v-icon>
       </template> 
     </v-data-table>
-  </template>
+</template>
   
   
   <script>
     import axios from 'axios';
+    import { useStore } from 'vuex';
   
     export default {
       data: () => ({
@@ -192,7 +135,8 @@
         editedItem: {},
         defaultItem: {},
         activos: [],
-        activo: {}
+        activo: {},
+        token : useStore().state.token
       }),
   
       computed: {
@@ -216,17 +160,27 @@
       methods: {
         async initialize() {
           try {
-            const tagsRecibidos = await axios.get('https://localhost:4000/tag');
+            const tagsRecibidos = await axios.get('https://localhost:4000/tag', {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
             const tagsProcesados = [];
   
             for (const tag of tagsRecibidos.data) {
-              const activos = await axios.get(`https://localhost:4000/tag/${tag.id}/activos`)
+              const activos = await axios.get(`https://localhost:4000/tag/${tag.id}/activos`, {
+                headers: {
+                  Authorization: `Bearer ${this.token}`
+                }
+              })
   
-              tag.activos = activos.data.map(activo => activo.descripcion).join(', ')
+              if(activos.data.length != 0) {
+                tag.activos = activos.data.map(activo => activo.descripcion).join(', ')
+              }
   
               tagsProcesados.push(tag);
             }
-  
+            await this.obtenerActivos()
             this.tags = tagsProcesados;
           } catch (error) {
             console.error('Error initializing:', error);
@@ -237,6 +191,7 @@
           this.editedIndex = this.tags.indexOf(item)
           this.editedItem = Object.assign({}, item)
           if(this.editedItem.imagen != null) this.editedItem.imagen = item.imagen.data 
+          if(this.editedItem.activos != undefined) this.editedItem.activos = item.activos.split(', ')
           this.dialog = true
         },
   
@@ -247,7 +202,11 @@
         },
   
         async deleteItemConfirm () {
-          await axios.delete(`https://localhost:4000/tag/${this.editedItem.id}`);
+          await axios.delete(`https://localhost:4000/tag/${this.editedItem.id}`, {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
           this.closeDelete()
         },
   
@@ -267,34 +226,54 @@
             this.editedIndex = -1
           })
         },
+
+        async borrarActivos() {
+          if(this.editedIndex != -1) {
+            const activos = await axios.get(`https://localhost:4000/tag/${this.editedItem.id}/activos`, {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
+            for (let i = 0; i < activos.data.length; i++) {
+              let activo = activos.data[i];
+              axios.put(`https://localhost:4000/activo/${activo.id}/borrarTag/${this.editedItem.id}`, {
+                headers: {
+                  Authorization: `Bearer ${this.token}`
+                }
+              })
+            }
+          }
+        }, 
   
         async save() {
           if (this.editedIndex > -1) {
+            await this.borrarActivos()
             const id = this.tags[this.editedIndex].id;
-  
-            await axios.put(`https://localhost:4000/tag/${id}`, this.editedItem);
-            
+            await axios.put(`https://localhost:4000/tag/${id}`, this.editedItem, {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
             this.initialize();
             this.close();
   
           } else {
-            await axios.post("https://localhost:4000/tag", {
-              tag: this.editedItem.tag,
-              imagen: this.editedItem.imagen
-            });
-  
+            await axios.post("https://localhost:4000/tag", this.editedItem, {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
             this.initialize();
             this.close();
           }
-        },
+        }, 
 
-        async addActivo (item) {
-          this.editedIndex = this.activos.indexOf(item)
-          this.editedItem = Object.assign({}, item)
-          this.dialogActivo = true
-
-          const activo = await axios.get(`https://localhost:4000/activo`)
-
+        async obtenerActivos(){
+          const activo = await axios.get('https://localhost:4000/activo', {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
           const dataActivos = activo.data
           const activos = []
 
@@ -303,62 +282,7 @@
           }
 
           this.activos = activos
-
         },
-
-        closeAddActivo () {
-          this.dialogActivo = false
-          this.activo = {}
-          this.$nextTick(() => {
-            this.editedItem = Object.assign({}, this.defaultItem)
-            this.editedIndex = -1
-          })
-        },
-
-        async saveAddActivo () {
-          try {
-            const activo = await axios.get(`https://localhost:4000/activo/descripcion/${this.activo.descripcion}`)
-            axios.put(`https://localhost:4000/tag/${this.editedItem.id}/activo/${activo.data.id}`)
-
-            this.closeAddActivo();
-            await this.initialize()
-          } catch (error) {
-            console.error('Error al guardar el responsable:', error);
-          }
-        },
-
-        async deleteActivo (item) {
-          this.editedIndex = this.activos.indexOf(item)
-          this.editedItem = Object.assign({}, item)
-          this.dialogDeleteActivo = true
-          const activo = await axios.get(`https://localhost:4000/tag/${item.id}/activos`)
-          const dataActivos = activo.data
-          const activos = []
-          for (const activo of dataActivos) {
-            activos.push(activo.descripcion)
-          }
-          this.activos = activos
-        },
-
-        closeDeleteActivo () {
-          this.dialogDeleteActivo = false
-          this.activo = {}
-          this.$nextTick(() => {
-            this.editedItem = Object.assign({}, this.defaultItem)
-            this.editedIndex = -1
-          })
-        },
-        async saveDeleteActivo () {
-          try {
-            const activo = await axios.get(`https://localhost:4000/activo/descripcion/${this.activo.descripcion}`)
-            axios.put(`https://localhost:4000/tag/${this.editedItem.id}/borrarActivo/${activo.data.id}`)
-
-            this.closeDeleteActivo();
-            await this.initialize()
-          } catch (error) {
-            console.error('Error al borrar el responsable:', error);
-          }
-        }
       },
     }
   </script>

@@ -4,7 +4,7 @@
         <v-toolbar flat>
           <v-toolbar-title>Responsables</v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-dialog v-model="dialog" max-width="500px">
+          <v-dialog v-model="dialog" max-width="750px">
             <template v-slot:activator="{ props }">
               <v-btn class="mb-2" color="primary" dark v-bind="props">
                 Nuevo responsable
@@ -19,21 +19,30 @@
                   <v-card-text>
                     <v-container>
                       <v-row>
-                        <v-col cols="12">
+                        <v-col cols="6">
                           <v-text-field
                             v-model="editedItem.numEmpleado"
                             label="Numero de empleado"
                           ></v-text-field>
                         </v-col>
-                      </v-row>
-                      <v-row>
-                        <v-col cols="12">
+                        <v-col cols="6">
                           <v-text-field
                             v-model="editedItem.nombre"
                             label="Nombre"
                           ></v-text-field>
                         </v-col>
                       </v-row>
+                      <v-row>
+                        <v-col cols="12">
+                          <v-select
+                            v-model="editedItem.activos"
+                            :items="activos"
+                            label="Activos"
+                            multiple
+                            chips
+                          ></v-select>
+                        </v-col>
+                      </v-row>  
                       <v-row>
                       <v-col cols="12">
                         <input type="file" ref="fileInput" style="display: none" @change="handleFileChange">
@@ -73,66 +82,6 @@
                   </v-card-actions>
                 </v-row>
               </v-container>
-            </v-card>
-          </v-dialog>
-
-          <v-dialog v-model="dialogActivo" max-width="500px">
-          <v-card>
-            <v-card-title>
-              <span class="text-h5">{{"Activo a agregar"}}</span>
-            </v-card-title>
-            <v-card-text>
-              <v-container>
-                <v-row>
-                  <v-col cols="12">
-                    <v-select
-                      v-model="activo.descripcion"
-                      :items="activos"
-                      label="Seleccionar activo"
-                    ></v-select>
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn color="blue-darken-1" variant="text" @click="closeAddActivo">
-                Cancelar
-              </v-btn>
-              <v-btn color="blue-darken-1" variant="text" @click="saveAddActivo">
-                Guardar
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-          </v-dialog>
-
-          <v-dialog v-model="dialogDeleteActivo" max-width="500px">
-            <v-card>
-              <v-card-title>
-                <span class="text-h5">{{"Activo a borrar"}}</span>
-              </v-card-title>
-              <v-card-text>
-                <v-container>
-                  <v-row>
-                    <v-col cols="12">
-                      <v-select
-                        v-model="activo.descripcion"
-                        :items="activos"
-                        label="Seleccionar activo"
-                      ></v-select>
-                    </v-col>
-                  </v-row>
-                </v-container>
-              </v-card-text>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="blue-darken-1" variant="text" @click="closeDeleteActivo">
-                  Cancelar
-                </v-btn>
-                <v-btn color="blue-darken-1" variant="text" @click="saveDeleteActivo">
-                  Borrar
-                </v-btn>
-              </v-card-actions>
             </v-card>
           </v-dialog>
   
@@ -177,28 +126,15 @@
         >
           mdi-delete
         </v-icon>
-        <v-icon
-          class="me-2"
-          size="small"
-          @click="addActivo(item)"
-        >
-          mdi-devices
-        </v-icon>
-        <v-icon
-          class="me-2"
-          size="small"
-          @click="deleteActivo(item)"
-        >
-          mdi-alpha-x-circle
-        </v-icon>
       </template>
     </v-data-table>
-  </template>
+</template>
   
   
   <script>
     import axios from 'axios';
-  
+    import { useStore } from 'vuex';
+
     export default {
       data: () => ({
         dialog: false,
@@ -218,7 +154,8 @@
         dialogDeleteActivo: false,
         dialogActivo: false,
         activos: [],
-        activo: {}
+        activo: {},
+        token : useStore().state.token
       }),
   
       computed: {
@@ -242,17 +179,27 @@
       methods: {
         async initialize() {
           try {
-            const responsablesRecibidos = await axios.get('https://localhost:4000/responsable');
+            const responsablesRecibidos = await axios.get('https://localhost:4000/responsable', {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
             const responsablesProcesados = [];
   
             for (const responsable of responsablesRecibidos.data) {
-              const activos = await axios.get(`https://localhost:4000/responsable/${responsable.id}/activos`)
-  
-              responsable.activos = activos.data.map(activo => activo.descripcion).join(', ')
+              const activos = await axios.get(`https://localhost:4000/responsable/${responsable.id}/activos`, {
+                headers: {
+                  Authorization: `Bearer ${this.token}`
+                }
+              })
+
+              if(activos.data.length != 0) {
+                responsable.activos = activos.data.map(activo => activo.descripcion).join(', ')
+              }
   
               responsablesProcesados.push(responsable);
             }
-  
+            await this.obtenerActivos()
             this.responsables = responsablesProcesados;
           } catch (error) {
             console.error('Error initializing:', error);
@@ -263,6 +210,7 @@
           this.editedIndex = this.responsables.indexOf(item)
           this.editedItem = Object.assign({}, item)
           if(this.editedItem.imagen != null) this.editedItem.imagen = item.imagen.data 
+          if(this.editedItem.activos != undefined)this.editedItem.activos = item.activos.split(', ')
           this.dialog = true
         },
   
@@ -273,7 +221,11 @@
         },
   
         async deleteItemConfirm () {
-          await axios.delete(`https://localhost:4000/responsable/${this.editedItem.id}`);
+          await axios.delete(`https://localhost:4000/responsable/${this.editedItem.id}`, {
+            headers: {
+              Authorization: `Bearer ${this.token}`
+            }
+          })
           this.closeDelete()
         },
   
@@ -293,20 +245,44 @@
             this.editedIndex = -1
           })
         },
-  
-        async save() {
-          if (this.editedIndex > -1) {
-            const id = this.responsables[this.editedIndex].id;
-            await axios.put(`https://localhost:4000/responsable/${id}`, this.editedItem);
-            this.initialize();
-            this.close();
-          } else {
-            await axios.post("https://localhost:4000/responsable", this.editedItem);
-            this.initialize();
-            this.close();
+        async borrarActivos() {
+          if(this.editedIndex != -1) {
+            const activos = await axios.get(`https://localhost:4000/responsable/${this.editedItem.id}/activos`, {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
+            for (let i = 0; i < activos.data.length; i++) {
+              let activo = activos.data[i];
+              axios.put(`https://localhost:4000/activo/${activo.id}/borrarResponsable`, {
+                headers: {
+                  Authorization: `Bearer ${this.token}`
+                }
+              })
+            }
           }
         },
-        
+        async save() {
+          if (this.editedIndex > -1) {
+            await this.borrarActivos()
+            const id = this.responsables[this.editedIndex].id
+            await axios.put(`https://localhost:4000/responsable/${id}`, this.editedItem, {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
+            this.initialize()
+            this.close()
+          } else {
+            await axios.post("https://localhost:4000/responsable", this.editedItem, {
+              headers: {
+                Authorization: `Bearer ${this.token}`
+              }
+            })
+            this.initialize()
+            this.close()
+          }
+        },
         openFilePicker() {
           this.$refs.fileInput.click();
         },
@@ -338,79 +314,22 @@
           }
           return URL.createObjectURL(blob)
         }
-      }, 
-      
-      async addActivo (item) {
-        this.editedIndex = this.activos.indexOf(item)
-        this.editedItem = Object.assign({}, item)
-        this.dialogActivo = true
-
-        const activo = await axios.get(`https://localhost:4000/activo`)
-
-        const dataActivos = activo.data
-        const activos = []
-
-        for (const activo of dataActivos) {
-          activos.push(activo.descripcion)
-        }
-
-        this.activos = activos
-
       },
-
-      closeAddActivo () {
-        this.dialogActivo = false
-        this.activo = {}
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedIndex = -1
-      })
-      },
-
-      async saveAddActivo () {
-        try {
-          const activo = await axios.get(`https://localhost:4000/activo/descripcion/${this.activo.descripcion}`)
-          axios.put(`https://localhost:4000/activo/${activo.data.id}/responsable/${this.editedItem.numEmpleado}`)
-
-          this.closeAddActivo();
-          this.initialize()
-        } catch (error) {
-          console.error('Error al guardar el responsable:', error);
-        }
-      },
-
-      async deleteActivo (item) {
-        this.editedIndex = this.activos.indexOf(item)
-        this.editedItem = Object.assign({}, item)
-        this.dialogDeleteActivo = true
-        const activo = await axios.get(`https://localhost:4000/responsable/${item.id}/activos`)
-        const dataActivos = activo.data
-        const activos = []
-        for (const activo of dataActivos) {
-          activos.push(activo.descripcion)
-        }
-        this.activos = activos
-      },
-
-      closeDeleteActivo () {
-        this.dialogDeleteActivo = false
-        this.activo = {}
-        this.$nextTick(() => {
-          this.editedItem = Object.assign({}, this.defaultItem)
-          this.editedIndex = -1
+      async obtenerActivos(){
+        const activo = await axios.get('https://localhost:4000/activo', {
+          headers: {
+            Authorization: `Bearer ${this.token}`
+          }
         })
-      },
-      async saveDeleteActivo () {
-        try {
-          const activo = await axios.get(`https://localhost:4000/activo/descripcion/${this.activo.descripcion}`)
-          axios.put(`https://localhost:4000/activo/${activo.data.id}/borrarResponsable`)
+        const dataActivos = activo.data
+        const activos = []
 
-          this.closeDeleteActivo();
-          this.initialize()
-        } catch (error) {
-          console.error('Error al borrar el responsable:', error);
+        for (const activo of dataActivos) {
+          activos.push(activo.descripcion)
         }
-      }
-    },
+
+        this.activos = activos
+      },
+    }, 
   }
 </script>
