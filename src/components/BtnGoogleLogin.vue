@@ -18,7 +18,6 @@
 
     const googleLoginBtn = ref(null)
     const store = useStore()
-
     const isSignedIn = ref(false)
 
     let user = {
@@ -34,11 +33,11 @@
 
         script.onload = () => {
             window.google.accounts.id.initialize({
-                client_id: '485620210718-p6dghjf760682uu6ppfcg6u0fsj94t09.apps.googleusercontent.com',
+                client_id: import.meta.env.VITE_Cliente,
                 callback: onSuccess,
                 context: 'signin',
                 auto_select: false, 
-                auto_prompt: 'none', 
+                auto_prompt: false, 
                 prompt_parent_id: 'google-login-container',
                 scope: 'email',
                 referrerPolicy: {
@@ -68,7 +67,9 @@
 
     async function onSuccess(googleUser) {
         const userPayload = parseJwt(googleUser.credential);
-        const tokenResponse = await axios.post('https://localhost:4000/passport/login', userPayload);
+
+        const tokenResponse = await axios.post('https://localhost:4000/passport/login', googleUser);
+
         try {
             const activosRecibidos = await axios.get('https://localhost:4000/activo', {
                 headers: {
